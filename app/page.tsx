@@ -1,24 +1,25 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Star, 
-  CheckCircle, 
-  Palette, 
-  Shield, 
-  ArrowRight, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Instagram, 
-  Menu, 
-  X, 
-  Clock, 
-  Heart, 
+import {
+  Star,
+  CheckCircle,
+  Palette,
+  Shield,
+  ArrowRight,
+  Phone,
+  Mail,
+  MapPin,
+  Instagram,
+  Menu,
+  X,
+  Clock,
+  Heart,
   Feather,
   Quote,
   ImageOff,
-  Send
+  Send,
+  ChevronDown
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -73,8 +74,8 @@ function SafeImage({ src, alt, fill, width, height, className, priority }: any) 
 }
 
 // --- Hooks ---
-const useScrollReveal = () => {
-  const ref = useRef<HTMLElement>(null);
+const useScrollReveal = <T extends HTMLElement>() => {
+  const ref = useRef<T>(null);
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -86,6 +87,58 @@ const useScrollReveal = () => {
   }, []);
   return { ref, isVisible };
 };
+
+// --- Custom Components ---
+function CustomSelect({ options, value, onChange, label }: { options: string[], value: string, onChange: (val: string) => void, label: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <label className="block text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">{label}</label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-left text-secondary focus:outline-none focus:border-accent transition-all flex justify-between items-center"
+      >
+        <span className={value ? "text-secondary font-medium" : "text-stone-400"}>
+          {value || "Select option"}
+        </span>
+        <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180 text-accent' : 'text-stone-400'}`}>
+          <ChevronDown size={18} />
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-30 top-full left-0 right-0 mt-2 bg-white border border-stone-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+          {options.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                onChange(option);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-5 py-4 text-sm font-semibold transition-colors ${value === option ? 'bg-secondary text-white' : 'hover:bg-stone-50 text-secondary'}`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // --- Icons Helper ---
 const IconMap: any = {
@@ -102,11 +155,25 @@ export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [eventType, setEventType] = useState("Wedding");
+  const statsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Auto-sliding for stats on mobile
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (statsRef.current && window.innerWidth < 640) {
+        const { scrollLeft, scrollWidth, clientWidth } = statsRef.current;
+        const nextScroll = scrollLeft + clientWidth >= scrollWidth - 10 ? 0 : scrollLeft + clientWidth;
+        statsRef.current.scrollTo({ left: nextScroll, behavior: 'smooth' });
+      }
+    }, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -159,24 +226,34 @@ export default function Page() {
     setFormSubmitted(true);
   };
 
-  const heroReveal = useScrollReveal();
-  const featuresReveal = useScrollReveal();
-  const productsReveal = useScrollReveal();
-  const aboutReveal = useScrollReveal();
-  const testimonialReveal = useScrollReveal();
-  const contactReveal = useScrollReveal();
+  const heroReveal = useScrollReveal<HTMLDivElement>();
+  const featuresReveal = useScrollReveal<HTMLElement>();
+  const productsReveal = useScrollReveal<HTMLElement>();
+  const aboutReveal = useScrollReveal<HTMLElement>();
+  const testimonialReveal = useScrollReveal<HTMLElement>();
+  const contactReveal = useScrollReveal<HTMLElement>();
 
   return (
-    <main className="relative overflow-x-hidden">
-      {/* Navbar Pattern H4 */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-md py-4' : 'bg-transparent py-6'}`}>
-        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+    <main className="bg-stone-50 min-h-screen max-w-screen-2xl mx-auto bg-white relative overflow-x-hidden shadow-[0_0_100px_rgba(0,0,0,0.05)]">
+      {/* Navbar Pattern H4 - Dynamic Island Style on Mobile */}
+      <nav className={`fixed z-50 transition-all duration-500 
+        ${scrolled 
+          ? 'top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-lg lg:max-w-7xl lg:top-0 lg:left-0 lg:right-0 lg:translate-x-0' 
+          : 'top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-xl lg:max-w-7xl lg:top-0 lg:left-0 lg:right-0 lg:translate-x-0'
+        }`}>
+        <div className={`mx-auto px-6 py-4 flex justify-between items-center transition-all duration-500 
+          ${scrolled 
+            ? 'bg-secondary/90 backdrop-blur-xl shadow-2xl rounded-full lg:bg-white/95 lg:rounded-none lg:shadow-md' 
+            : 'bg-white/10 backdrop-blur-md rounded-2xl lg:bg-transparent lg:rounded-none lg:shadow-none'
+          }`}>
           {/* Logo Style L2 */}
           <a href="#home" className="flex items-center gap-3 group">
-            <span className="font-heading text-3xl font-black text-secondary tracking-tighter group-hover:text-accent transition-colors">
+            <span className={`font-heading text-2xl lg:text-3xl font-black tracking-tighter transition-colors 
+              ${scrolled ? 'text-accent' : 'text-white lg:text-secondary'}`}>
               PE
             </span>
-            <span className={`text-xs font-bold tracking-[0.2em] uppercase hidden sm:block ${scrolled ? 'text-secondary' : 'text-secondary/80'}`}>
+            <span className={`text-[10px] font-bold tracking-[0.2em] uppercase hidden sm:block 
+              ${scrolled ? 'text-white/80' : 'text-white lg:text-secondary/80'}`}>
               {brand.name}
             </span>
           </a>
@@ -192,8 +269,8 @@ export default function Page() {
             </a>
           </div>
 
-          <button onClick={() => setMenuOpen(true)} className="lg:hidden text-secondary p-2">
-            <Menu size={28} />
+          <button onClick={() => setMenuOpen(true)} className={`lg:hidden p-2 rounded-full transition-colors ${scrolled ? 'text-white bg-white/10' : 'text-white bg-black/20'}`}>
+            <Menu size={24} />
           </button>
         </div>
       </nav>
@@ -208,17 +285,17 @@ export default function Page() {
             </button>
             <div className="flex flex-col gap-8">
               {['Home', 'Services', 'Portfolio', 'About', 'Contact'].map((link) => (
-                <a 
-                  key={link} 
-                  href={`#${link.toLowerCase()}`} 
+                <a
+                  key={link}
+                  href={`#${link.toLowerCase()}`}
                   onClick={() => setMenuOpen(false)}
                   className="text-2xl font-heading font-bold text-white hover:text-accent"
                 >
                   {link}
                 </a>
               ))}
-              <a 
-                href="#contact" 
+              <a
+                href="#contact"
                 onClick={() => setMenuOpen(false)}
                 className="mt-10 bg-accent text-secondary py-4 rounded-xl font-black text-center text-lg"
               >
@@ -230,42 +307,46 @@ export default function Page() {
       )}
 
       {/* Hero Section Pattern HR-C */}
-      <section id="home" className="min-h-screen grid lg:grid-cols-2 items-center bg-white pt-20">
-        <div className="px-6 md:px-12 lg:px-20 py-16 order-2 lg:order-1">
+      <section id="home" className="relative min-h-screen flex items-center lg:grid lg:grid-cols-2 bg-white pt-20 overflow-hidden">
+        {/* Mobile Background Image (also desktop right side) */}
+        <div className="absolute inset-0 lg:relative lg:inset-auto h-full w-full order-1 lg:order-2 overflow-hidden z-0 lg:z-auto">
+          <SafeImage
+            src={images[0]}
+            alt="Luxury Wedding Event"
+            fill
+            className="object-cover"
+            priority
+          />
+          {/* Mobile Overlay */}
+          <div className="absolute inset-0 bg-stone-900/60 lg:hidden" />
+          {/* Desktop Overlay/Gradient */}
+          <div className="absolute inset-x-0 left-0 w-32 bg-gradient-to-r from-white to-transparent hidden lg:block" />
+        </div>
+
+        <div className="relative z-10 px-6 md:px-12 lg:px-20 py-16 order-2 lg:order-1 text-center lg:text-left w-full">
           <div className={`transition-all duration-1000 ${heroReveal.isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`} ref={heroReveal.ref}>
-            <h1 className="font-heading text-6xl md:text-8xl font-bold text-secondary leading-[0.95] tracking-tight mb-8">
+            <h1 className="font-heading text-6xl md:text-8xl font-bold text-white lg:text-secondary leading-[0.95] tracking-tight mb-8">
               Crafting Lagos Luxe <span className="text-accent italic">Celebrations</span>
             </h1>
-            <p className="text-secondary/70 text-lg md:text-xl max-w-lg mb-12 leading-relaxed font-medium">
+            <p className="text-white/80 lg:text-secondary/70 text-lg md:text-xl max-w-lg mx-auto lg:mx-0 mb-12 leading-relaxed font-medium">
               Your vision, executed with exquisite precision. Specializing in unforgettable weddings and impactful corporate events across Nigeria.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <a href="#contact" className="bg-secondary text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-accent transition-all animate-glow shadow-xl flex items-center gap-3 group">
+            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+              <a href="#contact" className="bg-accent lg:bg-secondary text-white px-8 lg:px-10 py-4 lg:py-5 rounded-full font-bold text-base lg:text-lg hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-3 group w-full sm:w-auto">
                 REDEFINE YOUR SATISFACTION <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
               </a>
             </div>
           </div>
         </div>
-        <div className="relative h-[60vh] lg:h-screen order-1 lg:order-2 overflow-hidden">
-          <SafeImage 
-            src={images[0]} 
-            alt="Luxury Wedding Event" 
-            fill 
-            className="object-cover" 
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-white/5 to-white lg:hidden" />
-          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent hidden lg:block" />
-        </div>
       </section>
 
       {/* Divider A6b */}
-      <div className="py-16 flex items-center gap-6 px-8 max-w-6xl mx-auto">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
-        <span className="text-accent font-mono text-xs tracking-[0.3em] uppercase whitespace-nowrap">
+      <div className="py-16 flex items-center justify-center gap-4 px-6 max-w-6xl mx-auto overflow-hidden">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent hidden sm:block" />
+        <span className="text-accent font-heading text-[10px] sm:text-xs tracking-[0.3em] uppercase whitespace-normal text-center leading-relaxed max-w-[80vw]">
           {brand.tagline}
         </span>
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent hidden sm:block" />
       </div>
 
       {/* Features Section */}
@@ -328,16 +409,19 @@ export default function Page() {
       {/* About Section */}
       <section id="about" ref={aboutReveal.ref} className="py-24 bg-secondary text-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row items-center gap-16">
-          <div className={`flex-1 transition-all duration-1000 ${aboutReveal.isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
+          <div className={`flex-1 w-full transition-all duration-1000 ${aboutReveal.isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
             <h2 className="font-heading text-4xl md:text-6xl font-bold mb-8 leading-tight">The Pee Exquisite Difference</h2>
-            <p className="text-white/70 text-lg leading-relaxed mb-10">
+            <p className="text-white/70 text-lg leading-relaxed mb-10 max-w-2xl">
               Founded on the principle that every major life event deserves grandeur, Pee Exquisite Events has established itself as the gold standard in Nigerian event architecture. We blend global standards with local finesse, ensuring every celebration reflects true opulence and meticulous organization.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div 
+              ref={statsRef}
+              className="flex sm:grid sm:grid-cols-3 gap-8 overflow-x-auto sm:overflow-x-visible snap-x snap-mandatory no-scrollbar pb-4 -mx-6 px-6 sm:mx-0 sm:px-0"
+            >
               {stats.map((stat, i) => {
                 const Icon = IconMap[stat.icon] || Heart;
                 return (
-                  <div key={i} className="text-center lg:text-left">
+                  <div key={i} className="text-center lg:text-left min-w-[200px] snap-center">
                     <Icon size={24} className="text-accent mb-4 mx-auto lg:mx-0" />
                     <p className="text-4xl font-heading font-bold text-accent">{stat.number}</p>
                     <p className="text-white/50 text-xs uppercase tracking-widest mt-2">{stat.label}</p>
@@ -389,7 +473,7 @@ export default function Page() {
               <div>
                 <h2 className="font-heading text-4xl font-bold mb-6">Book Your Exquisite Consultation</h2>
                 <p className="text-white/70 mb-12">Ready to start planning your landmark event? Reach out today to begin designing your masterpiece.</p>
-                
+
                 <div className="space-y-8">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-accent">
@@ -430,45 +514,44 @@ export default function Page() {
 
             <div className="lg:w-3/5 p-12 lg:p-16">
               {formSubmitted ? (
-                <div className="h-full flex flex-col items-center justify-center text-center animate-scaleIn">
-                  <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-6">
-                    <CheckCircle size={48} />
+                <div className="h-full flex flex-col items-center justify-center text-center py-12 animate-in fade-in zoom-in duration-500">
+                  <div className="w-24 h-24 bg-accent/10 text-accent rounded-full flex items-center justify-center mb-8">
+                    <CheckCircle size={56} />
                   </div>
-                  <h3 className="font-heading text-3xl font-bold text-secondary mb-4">Request Received</h3>
-                  <p className="text-secondary/60">An exquisite events specialist will contact you within 24 hours.</p>
+                  <h3 className="font-heading text-4xl font-bold text-secondary mb-4">Request Received</h3>
+                  <p className="text-secondary/60 text-lg">An exquisite events specialist will contact you within 24 hours to begin your journey.</p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">Full Name</label>
-                      <input required type="text" className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-colors" placeholder="John Doe" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">Email Address</label>
-                      <input required type="email" className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-colors" placeholder="john@example.com" />
-                    </div>
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">Full Name</label>
+                    <input required type="text" className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-all hover:bg-white" placeholder="John Adebayo" />
                   </div>
-                  <div>
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">Email Address</label>
+                    <input required type="email" className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-all hover:bg-white" placeholder="john@exquisite.ng" />
+                  </div>
+                  <div className="md:col-span-1">
                     <label className="block text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">Phone Number</label>
-                    <input required type="tel" className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-colors" placeholder="+234..." />
+                    <input required type="tel" className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-all hover:bg-white" placeholder="+234 800 000 0000" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">Event Type</label>
-                    <select className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-colors">
-                      <option>Wedding</option>
-                      <option>Corporate Event</option>
-                      <option>Social Celebration</option>
-                      <option>Other</option>
-                    </select>
+                  <div className="md:col-span-1">
+                    <CustomSelect
+                      label="Event Type"
+                      options={["Wedding", "Corporate Event", "Social Celebration", "Kiddies Extravaganza", "Other"]}
+                      value={eventType}
+                      onChange={setEventType}
+                    />
                   </div>
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">Tell us about your dream</label>
-                    <textarea required rows={4} className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-colors" placeholder="How can we help make it exquisite?"></textarea>
+                    <textarea required rows={4} className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-secondary focus:outline-none focus:border-accent transition-all hover:bg-white" placeholder="How can we help make it exquisite?"></textarea>
                   </div>
-                  <button type="submit" className="w-full bg-secondary text-white py-5 rounded-xl font-bold text-lg hover:bg-accent transition-all shadow-xl flex items-center justify-center gap-3">
-                    SEND REQUEST <Send size={20} />
-                  </button>
+                  <div className="md:col-span-2">
+                    <button type="submit" className="w-full bg-secondary text-white py-5 rounded-xl font-bold text-lg hover:bg-accent transition-all shadow-xl flex items-center justify-center gap-3 active:scale-[0.98]">
+                      SEND REQUEST <Send size={20} />
+                    </button>
+                  </div>
                 </form>
               )}
             </div>
@@ -489,7 +572,7 @@ export default function Page() {
                 Crafting moments of unforgettable grandeur. Lagos' premier planning hub for bespoke celebrations.
               </p>
             </div>
-            
+
             <div>
               <h4 className="font-bold text-secondary uppercase tracking-widest text-xs mb-8">Navigation</h4>
               <ul className="space-y-4">
