@@ -236,14 +236,14 @@ export default function Page() {
   return (
     <main className="bg-stone-50 min-h-screen max-w-screen-2xl mx-auto bg-white relative overflow-x-hidden shadow-[0_0_100px_rgba(0,0,0,0.05)]">
       {/* Navbar Pattern H4 - Dynamic Island Style on Mobile */}
-      <nav className={`fixed z-50 transition-all duration-500 
-        ${scrolled 
-          ? 'top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-lg lg:max-w-7xl lg:top-0 lg:left-0 lg:right-0 lg:translate-x-0' 
-          : 'top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-xl lg:max-w-7xl lg:top-0 lg:left-0 lg:right-0 lg:translate-x-0'
+      <nav className={`fixed z-50 transition-all duration-500 left-1/2 -translate-x-1/2 w-full 
+        ${scrolled
+          ? 'top-4 w-[90%] max-w-lg lg:max-w-7xl lg:top-0'
+          : 'top-6 w-[95%] max-w-xl lg:max-w-7xl lg:top-0'
         }`}>
-        <div className={`mx-auto px-6 py-4 flex justify-between items-center transition-all duration-500 
-          ${scrolled 
-            ? 'bg-secondary/90 backdrop-blur-xl shadow-2xl rounded-full lg:bg-white/95 lg:rounded-none lg:shadow-md' 
+        <div className={`mx-auto mx-6 md:mx-0 px-6 py-4 flex justify-between items-center transition-all duration-500 
+          ${scrolled
+            ? 'bg-secondary/90 backdrop-blur-xl shadow-2xl rounded-full lg:bg-white/95 lg:rounded-none lg:shadow-md'
             : 'bg-white/10 backdrop-blur-md rounded-2xl lg:bg-transparent lg:rounded-none lg:shadow-none'
           }`}>
           {/* Logo Style L2 */}
@@ -414,7 +414,7 @@ export default function Page() {
             <p className="text-white/70 text-lg leading-relaxed mb-10 max-w-2xl">
               Founded on the principle that every major life event deserves grandeur, Pee Exquisite Events has established itself as the gold standard in Nigerian event architecture. We blend global standards with local finesse, ensuring every celebration reflects true opulence and meticulous organization.
             </p>
-            <div 
+            <div
               ref={statsRef}
               className="flex sm:grid sm:grid-cols-3 gap-8 overflow-x-auto sm:overflow-x-visible snap-x snap-mandatory no-scrollbar pb-4 -mx-6 px-6 sm:mx-0 sm:px-0"
             >
